@@ -13,7 +13,8 @@ import sys
 import io
 import typing
 
-import usersettings
+# import usersettings_fork as usersettings
+from . import usersettings_fork as usersettings
 import json
 import yaml
 
@@ -23,7 +24,8 @@ class SettingsHelper:
         self.settings = usersettings.Settings(app_id)
 
         for key, value in default_settings.items():
-            self.settings.add_setting(key, type(value), default=value)
+            print(key, type(value), f"{value=}")
+            self.settings.add_setting(str(key), type(value), default=type(value)(value))
         
         self.settings.load_settings()
     

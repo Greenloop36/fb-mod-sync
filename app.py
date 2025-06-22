@@ -12,7 +12,9 @@ from internal.lib import file_system, project_types
 from internal.runtime import updater
 
 import os
+import requests
 import sys
+import hashlib
 
 from tkinter import messagebox, filedialog
 
@@ -37,9 +39,10 @@ class UiHeader:
             self.label_description.grid(padx=pad, pady=(0, pad), sticky="w")
 
 class PathBox:
-    def __init__(self, master: str, label: str, stringvar: ttk.StringVar, padding: int):
+    def __init__(self, master: str, label: str, stringvar: ttk.StringVar, padding: int, help_text: str = None):
         # Properties
         self._str_var = stringvar
+        self._help_text = help_text
 
         # Ui
         self.frame = ttk.Frame(master)
@@ -53,6 +56,16 @@ class PathBox:
 
         self.button_browse = ttk.Button(self.frame, text="Browse", bootstyle="secondary", command=self.browse)
         self.button_browse.grid(row=0, column=2, padx=(0, padding), sticky="w")
+
+        if help_text:
+            self.button_help = ttk.Button(self.frame, text="?", bootstyle="secondary", command=self.help)
+            self.button_help.grid(row=0, column=3, padx=(0, padding), sticky="w")
+    
+    def help(self):
+        dialogs.Messagebox.show_info(
+            self._help_text,
+            "Information"
+        )
     
     def browse(self):
         start_dir: str = self._str_var.get() or None
@@ -116,7 +129,7 @@ class App:
         self.app_content = ttk.Frame(self.ui.root)
         self.app_content.grid()
 
-        self.entry_destination = PathBox(self.ui.root, "Mods Directory", self.var_destination, 15)
+        self.entry_destination = PathBox(self.ui.root, "Mods Directory", self.var_destination, 15, "test")
 
         ## Buttons
         self.frame_buttons = ttk.Frame(self.ui.root)
@@ -132,7 +145,7 @@ class App:
         self.container_main_buttons.grid(row=0, column=1, sticky="e", pady=15)
 
         ### button: Refresh
-        self.button_Refresh = ttk.Button(self.container_main_buttons, text="Check for updates", bootstyle="secondary")
+        self.button_Refresh = ttk.Button(self.container_main_buttons, text="Check for updates", bootstyle="secondary", command=self.refresh)
         self.button_Refresh.grid(sticky="e")
 
         ### button: Sync
@@ -143,14 +156,18 @@ class App:
 
         # Check for updates
         self.check_for_updates()
-    
+
+        # Apply settings
+        self.var_destination.set(self.settings.get_setting("destination_dir"))
+
+    # 
     def check_for_updates(self):
         update_available, newest_version = self.updater.is_update_available(self.project_version)
         if update_available:
             dialogs.Messagebox.show_info(
-            f"A new version, {newest_version}, is available.\nTo install it, click on File > Software Update.",
-            "Software Update"
-        )
+                f"A new version, {newest_version}, is available.\nTo install it, click on File > Software Update.",
+                "Software Update"
+            )
 
     def update_config(self):
         # Update saved dest dir
@@ -159,6 +176,8 @@ class App:
         if os.path.exists(destination):
             self.settings.set_setting("destination_dir", destination)
     
+
+    # UI Interaction
     def sync(self):
         destination: str = self.var_destination.get() or ""
 
@@ -168,9 +187,92 @@ class App:
 
         synchro = updater.Updater("Greenloop36", "fb-server_mods", destination, "Mods", "synchronising mods...", self.ui.root)
 
+    def refresh(self):
+        # Variables
+        directory: str = self.var_destination.get() or ""
+
+        
+        server_files: dict[str, str] = {}
+        local_files: dict[str, str]  = {}
+
+        problems: list[str] = []
+
+        # Verify
+        if not os.path.exists(directory):
+            return dialogs.Messagebox.show_warning(
+                f"You must set a destination directory.",
+                "Warning"
+            )
+        
+        if os.path.basename(directory) != "mods":
+            choice: str = dialogs.Messagebox.yesno(f"Are you sure that this is your mods folder?", "Warning", alert=True)
+            if choice != "Yes": return
+        
+        # Get
+        try:
+            response = requests.get(f"https://api.github.com/repos/{self.config["sync_location"]}/contents/")
+        except Exception as e:
+            return dialogs.Messagebox.show_error(
+                f"Refresh failed!\n{type(e).__name__}: {e}",
+                "Error"
+            )
+        
+        # Parse response
+        for data in response.json():
+            file_name: str = data["name"]
+            file_hash: str = data["sha"]
+
+            server_files[file_name] = file_hash
+
+        # Parse local files
+        for root, _, dir_files in os.walk(directory):
+            for name in dir_files:
+                if name.startswith("."): continue
+
+                full_path: str = os.path.join(root, name)
+
+                # Hash
+                try:
+                    with open(full_path, "rb") as f:
+                        hash: str = hashlib.sha1(f.read())
+                except Exception as e:
+                    return dialogs.Messagebox.show_error(
+                        f"Failed to read {name}!\n{type(e).__name__}: {e}",
+                        "Error"
+                    )
+                
+                local_files[name] = hash
+        
+        # Find problems
+        for name, hash in server_files.items():
+            if name not in local_files.keys():
+                problems.append(f'Missing file "{name}"!')
+                continue
+
+            if local_files[name] != hash:
+                problems.append(f'Local file "{name}" mismatch between server!')
+        
+        # Report problems
+        if len(problems) == 0:
+            return dialogs.Messagebox.show_info(
+                "No problems found!",
+                "Information"
+            )
+        else:
+            result: str = ""
+
+            for i in problems:
+                result += f"- {i}\n"
+            
+            result += "\nPlease synchronise your files."
+
+            return dialogs.Messagebox.show_warning(result, "Problems detected")
+
     def quit(self):
         self.update_config()
-        self.ui.root.destroy()
+        
+        try: self.ui.root.destroy()
+        except: pass
     
     def software_update(self):
         update_available, new_version = self.updater.is_update_available(self.project_version)
@@ -196,4 +298,6 @@ class App:
 
 # Runtime
 if __name__ == "__main__":
-    App().ui.root.mainloop()
+    instance = App()
+    instance.ui.root.mainloop()
+    instance.quit()
