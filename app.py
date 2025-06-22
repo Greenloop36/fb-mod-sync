@@ -31,11 +31,6 @@ class App:
         self.project: project_types.Project = self.FileSystem.read_resource("internal/data/project.yaml", "yaml")
         self.project_version: str = self.FileSystem.read_resource("internal/data/VERSION")
         self.default_settings: dict[str, any] = self.FileSystem.read_resource("internal/data/default_settings.json", "json")
-        
-        print(self.config)
-        print(self.project)
-        print(self.project_version)
-        print(self.default_settings)
 
         self.settings = file_system.SettingsHelper(self.project["project_information"]["app_id"], self.default_settings)
 
