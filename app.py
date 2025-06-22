@@ -20,6 +20,9 @@ import ttkbootstrap as ttk
 import ttkbootstrap.dialogs.dialogs as dialogs
 from ttkbootstrap.constants import *
 
+def void() -> None:
+    pass
+
 # Project
 class UiHeader:
     def __init__(self, master: ttk.Window, title: str, pad: int, description: str):
@@ -69,18 +72,6 @@ class Interface:
         self.root = ttk.Window(title=window_title, themename="darkly")
         self.root.resizable(False, False)
 
-        ## Menubar
-        self.menubar = ttk.Menu(self.root)
-    
-    def create_menu(self, name: str):
-        menu = ttk.Menu(self.menubar)
-
-        self.menus[name] = menu
-        self.menubar.add_cascade(label=name, menu=menu)
-    
-    def create_menubutton(self, menu_name: str, button_name: str, command):
-        self.menus[menu_name].add_command(label=button_name, command=command)
-
 class App:
     def __init__(self):
         # Project Properties
@@ -102,8 +93,21 @@ class App:
         self.var_destination = ttk.StringVar()
         
         ## Menubar
-        self.ui.create_menu("File")
-        self.ui.create_menubutton("File", "Update software", self.software_update)
+        self.menubar = ttk.Menu(self.ui.root)
+        self.ui.root.config(menu=self.menubar)
+
+        ## File
+        self.menu_file = ttk.Menu(self.menubar)
+        self.menu_file.add_command(label="Software Update", command=self.software_update)
+        self.menu_file.add_separator()
+        self.menu_file.add_command(label=f"Information...", command=self.information)
+        self.menu_file.add_command(label="Quit", command=self.quit)
+
+        self.menubar.add_cascade(label="File", menu=self.menu_file)
+
+
+        # self.ui.create_menu("File")
+        # self.ui.create_menubutton("File", "Perform software update", self.software_update)
 
         ## Header
         self.app_header = UiHeader(self.ui.root, self.project["project_information"]["name"], 15, "Automatically sync active mods on the Frenchy Boi Minecraft server")
@@ -134,7 +138,20 @@ class App:
         ### button: Sync
         self.button_sync = ttk.Button(self.container_main_buttons, text="Sync Mods", bootstyle="primary", command=self.sync)
         self.button_sync.grid(sticky="e", padx=15, row=0, column=1)
+
+        self.ui.root.update()
+
+        # Check for updates
+        self.check_for_updates()
     
+    def check_for_updates(self):
+        update_available, newest_version = self.updater.is_update_available(self.project_version)
+        if update_available:
+            dialogs.Messagebox.show_info(
+            f"A new version, {newest_version}, is available.\nTo install it, click on File > Software Update.",
+            "Software Update"
+        )
+
     def update_config(self):
         # Update saved dest dir
         destination: str = self.var_destination.get() or ""
@@ -168,6 +185,14 @@ class App:
 
         if choice == "OK":
             self.updater.update()
+    
+    def information(self):
+        dialogs.Messagebox.show_info(
+            f"You are currently running version {self.project_version} of {self.project["project_information"]["name"]}.\n\n"
+            f"This project is licensed under the GPL-3.0 license.\nFor more information, view the LICENSE file."
+            ,
+            "Information"
+        )
 
 # Runtime
 if __name__ == "__main__":
