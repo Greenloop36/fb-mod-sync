@@ -145,7 +145,7 @@ class App:
         self.container_main_buttons.grid(row=0, column=1, sticky="e", pady=15)
 
         ### button: Refresh
-        self.button_Refresh = ttk.Button(self.container_main_buttons, text="Check for updates", bootstyle="secondary", command=self.refresh)
+        self.button_Refresh = ttk.Button(self.container_main_buttons, text="Verify local files", bootstyle="secondary", command=self.refresh)
         self.button_Refresh.grid(sticky="e")
 
         ### button: Sync
@@ -186,14 +186,20 @@ class App:
             return
 
         synchro = updater.Updater("Greenloop36", "fb-server_mods", destination, "Mods", "synchronising mods...", self.ui.root)
+        success, result = synchro.update()
+
+        if success:
+            dialogs.Messagebox.show_info(f"Synchronised successfully.", "Information", alert=True)
+        else:
+            dialogs.Messagebox.show_error(f"Sync failed!\n{result}", "Error", alert=True)
 
     def refresh(self):
         # Variables
         directory: str = self.var_destination.get() or ""
 
         
-        server_files: dict[str, str] = {}
-        local_files: dict[str, str]  = {}
+        server_files: list[str] = []
+        local_files: list[str]  = []
 
         problems: list[str] = []
 
@@ -220,9 +226,10 @@ class App:
         # Parse response
         for data in response.json():
             file_name: str = data["name"]
-            file_hash: str = data["sha"]
+            # file_hash: str = data["sha"]
 
-            server_files[file_name] = file_hash
+            # server_files[file_name] = file_hash
+            server_files.append(file_name)
 
         # Parse local files
         for root, _, dir_files in os.walk(directory):
@@ -232,25 +239,26 @@ class App:
                 full_path: str = os.path.join(root, name)
 
                 # Hash
-                try:
-                    with open(full_path, "rb") as f:
-                        hash: str = hashlib.sha1(f.read())
-                except Exception as e:
-                    return dialogs.Messagebox.show_error(
-                        f"Failed to read {name}!\n{type(e).__name__}: {e}",
-                        "Error"
-                    )
+                # try:
+                #     with open(full_path, "rb") as f:
+                #         hash: str = hashlib.sha1(f.read()).hexdigest()
+                # except Exception as e:
+                #     return dialogs.Messagebox.show_error(
+                #         f"Failed to read {name}!\n{type(e).__name__}: {e}",
+                #         "Error"
+                #     )
                 
-                local_files[name] = hash
+                local_files.append(name)
         
         # Find problems
-        for name, hash in server_files.items():
-            if name not in local_files.keys():
+        for name in server_files:
+            if name not in local_files:
                 problems.append(f'Missing file "{name}"!')
                 continue
 
-            if local_files[name] != hash:
-                problems.append(f'Local file "{name}" mismatch between server!')
+            # if local_files[name] != hash:
+            #     print(f"{local_files[name]}\n{hash}\n")
+            #     problems.append(f'Local file "{name}" mismatch between server!')
         
         # Report problems
         if len(problems) == 0:
@@ -270,7 +278,7 @@ class App:
 
     def quit(self):
         self.update_config()
-        
+
         try: self.ui.root.destroy()
         except: pass
     

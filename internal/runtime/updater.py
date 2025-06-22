@@ -210,7 +210,7 @@ class Updater:
         self.interface.set_progress(3)
         
         # Finish the update
-        self.interface.set_status("finishing software update")
+        self.interface.set_status("finishing update")
         archive_dump.cleanup()
         self._update_result = (True, None)
 
