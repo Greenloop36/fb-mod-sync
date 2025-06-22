@@ -1,11 +1,11 @@
 # The GitHub repo to connect this project to
 repository: {
   owner: Greenloop36,
-  name: ui-app-boilerplate
+  name: fb-mod-sync
 }
 
 # Information about this project
 project_information: {
-  name: UI App Boilerplate,
-  app_id: com.gl36.ui-app-boilerplate,
+  name: FB Server Mods Synchroniser,
+  app_id: com.gl36.fb-mod-sync,
 }
