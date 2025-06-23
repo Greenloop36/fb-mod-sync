@@ -74,3 +74,6 @@ class FileSystem:
             return yaml.safe_load(file)
         else:
             return file.read()
+
+def is_running_as_exe() -> bool:
+    return getattr(sys, "frozen", False)

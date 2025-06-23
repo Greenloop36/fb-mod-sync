@@ -13,10 +13,9 @@ from internal.runtime import updater
 
 import os
 import requests
-import sys
-import hashlib
+import webbrowser
 
-from tkinter import messagebox, filedialog
+from tkinter import filedialog
 
 import ttkbootstrap as ttk
 import ttkbootstrap.dialogs.dialogs as dialogs
@@ -290,6 +289,16 @@ class App:
 
             if choice == "No":
                 return
+        
+        # Updater does not support updating as .exe
+        if file_system.is_running_as_exe():
+            choice: str = dialogs.Messagebox.yesno("Cannot update as an .exe file.\nOpen the releases page to download manually?", "Software Update", alert=True)
+
+            if choice == "yes":
+                webbrowser.open(f"https://github.com/{self.project["repository"]["owner"]}/{self.project["repository"]["name"]}/releases/latest")
+                
+            return
+
         
         choice: str = dialogs.Messagebox.okcancel("Perform a software update?", "Software Update")
 
