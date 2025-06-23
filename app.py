@@ -128,7 +128,15 @@ class App:
         self.app_content = ttk.Frame(self.ui.root)
         self.app_content.grid()
 
-        self.entry_destination = PathBox(self.ui.root, "Mods Directory", self.var_destination, 15, "test")
+        self.entry_destination = PathBox(self.ui.root, "Mods Directory", self.var_destination, 15,
+            "This is your mods folder. To get this file:\n"
+            "- Open CurseForge and select your profile\n"
+            "- Click the three dots next to the Play button\n"
+            "- Click the \"Open Folder\" button from the list\n"
+            "- Open the \"mods\" folder, and then copy the path\n"
+            "- Paste the copied path into the text box to the left.\n\n"
+            "You will only have to do this once! Your settings are saved automatically."
+            )
 
         ## Buttons
         self.frame_buttons = ttk.Frame(self.ui.root)
@@ -296,7 +304,7 @@ class App:
 
             if choice == "yes":
                 webbrowser.open(f"https://github.com/{self.project["repository"]["owner"]}/{self.project["repository"]["name"]}/releases/latest")
-                
+
             return
 
         
