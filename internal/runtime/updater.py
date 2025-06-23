@@ -214,6 +214,8 @@ class Updater:
         archive_dump.cleanup()
         self._update_result = (True, None)
 
+        self.interface.root.destroy()
+
         return True, None
     
     def get_repository_file_content(self, path: str) -> Result:

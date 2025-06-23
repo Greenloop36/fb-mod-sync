@@ -294,7 +294,13 @@ class App:
         choice: str = dialogs.Messagebox.okcancel("Perform a software update?", "Software Update")
 
         if choice == "OK":
-            self.updater.update()
+            success, result = self.updater.update()
+
+            if success:
+                dialogs.Messagebox.show_info("Update successful. The software will now exit.", "Software Update")
+                self.quit()
+            else:
+                return dialogs.Messagebox.show_warning(f"Update failed. Try again later.\n\n{result}", "Software Update")
     
     def information(self):
         dialogs.Messagebox.show_info(
