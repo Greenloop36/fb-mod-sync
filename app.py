@@ -25,6 +25,15 @@ def void() -> None:
     pass
 
 # Project
+class Banner:
+    def __init__(self, master: ttk.Window, text: str, style: str = "info", command = void):
+        self.frame = ttk.Frame(master)
+        self.frame.grid(row=-1)
+        self.frame.columnconfigure(0, weight=1)
+
+        self.button = ttk.Button(text=text, bootstyle=style, command=command)
+        self.button.grid()
+
 class UiHeader:
     def __init__(self, master: ttk.Window, title: str, pad: int, description: str):
         self.frame = ttk.Frame(master)
@@ -162,19 +171,27 @@ class App:
         self.ui.root.update()
 
         # Check for updates
-        self.check_for_updates()
+        can_update: bool = self.check_for_updates()
+
+        if can_update:
+            try:
+                Banner(self.ui.root, f"A software update is available.", command=self.software_update)
+            except Exception as e:
+                print(e)
 
         # Apply settings
         self.var_destination.set(self.settings.get_setting("destination_dir"))
 
     # 
-    def check_for_updates(self):
+    def check_for_updates(self) -> bool:
         update_available, newest_version = self.updater.is_update_available(self.project_version)
         if update_available:
             dialogs.Messagebox.show_info(
                 f"A new version, {newest_version}, is available.\nTo install it, click on File > Software Update.",
                 "Software Update"
             )
+
+        return update_available
 
     def update_config(self):
         # Update saved dest dir
