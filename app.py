@@ -8,6 +8,9 @@
 """
 
 # Imports
+import sys
+sys.dont_write_bytecode = True
+
 from internal.lib import file_system, project_types
 from internal.runtime import updater
 
@@ -308,11 +311,13 @@ class App:
                 return
         
         # Updater does not support updating as .exe
-        if file_system.is_running_as_exe():
+        if not file_system.is_running_as_exe():
             choice: str = dialogs.Messagebox.yesno("Cannot update as an .exe file.\nOpen the releases page to download manually?", "Software Update", alert=True)
 
-            if choice == "yes":
-                webbrowser.open(f"https://github.com/{self.project["repository"]["owner"]}/{self.project["repository"]["name"]}/releases/latest")
+            if choice == "Yes":
+                url: str = f"https://github.com/{self.project["repository"]["owner"]}/{self.project["repository"]["name"]}/releases/latest"
+                print(url)
+                webbrowser.open(url)
 
             return
 
