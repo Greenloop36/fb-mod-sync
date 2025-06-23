@@ -137,7 +137,8 @@ class Updater:
         while update_thread.is_alive():
             self.interface.poll()
         
-        # update_thread.join()
+        try: update_thread.join()
+        except: pass
 
         self.interface.destroy()
         return self._update_result or (False, "Unknown error")
@@ -213,8 +214,6 @@ class Updater:
         self.interface.set_status("finishing update")
         archive_dump.cleanup()
         self._update_result = (True, None)
-
-        self.interface.root.destroy()
 
         return True, None
     
