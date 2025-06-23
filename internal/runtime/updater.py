@@ -231,6 +231,7 @@ class Updater:
 
         if not success:
             # The request failed, so assume there isnt
+            logging.warning(f"Failed to check for updates: {result}")
             return False, None
         else:
             result = result.replace("\n", "")

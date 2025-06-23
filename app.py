@@ -25,19 +25,10 @@ def void() -> None:
     pass
 
 # Project
-class Banner:
-    def __init__(self, master: ttk.Window, text: str, style: str = "info", command = void):
-        self.frame = ttk.Frame(master)
-        self.frame.grid(row=-1)
-        self.frame.columnconfigure(0, weight=1)
-
-        self.button = ttk.Button(text=text, bootstyle=style, command=command)
-        self.button.grid()
-
 class UiHeader:
     def __init__(self, master: ttk.Window, title: str, pad: int, description: str):
         self.frame = ttk.Frame(master)
-        self.frame.grid(sticky="w")
+        self.frame.grid(sticky="w", row=1)
 
         self.label_title = ttk.Label(self.frame, text=title, font={"family": "Helvetica", "weight": "bold", "size": 17}, anchor="w")
         self.label_title.grid(padx=(pad, 50), pady=(pad, 0), sticky="w")
@@ -173,17 +164,18 @@ class App:
         # Check for updates
         can_update: bool = self.check_for_updates()
 
-        if can_update:
-            try:
-                Banner(self.ui.root, f"A software update is available.", command=self.software_update)
-            except Exception as e:
-                print(e)
+        # if can_update:
+        #     try:
+        #         Banner(self.ui.root, f"A software update is available.")
+        #     except Exception as e:
+        #         print(e)
 
         # Apply settings
         self.var_destination.set(self.settings.get_setting("destination_dir"))
 
     # 
     def check_for_updates(self) -> bool:
+        # return True
         update_available, newest_version = self.updater.is_update_available(self.project_version)
         if update_available:
             dialogs.Messagebox.show_info(
