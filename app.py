@@ -215,7 +215,6 @@ class App:
     def refresh(self):
         # Variables
         directory: str = self.var_destination.get() or ""
-
         
         server_files: list[str] = []
         local_files: list[str]  = []
@@ -251,24 +250,12 @@ class App:
             server_files.append(file_name)
 
         # Parse local files
-        for root, _, dir_files in os.walk(directory):
-            for name in dir_files:
-                if name.startswith("."): continue
+        for name in os.listdir(directory):
+            if name.startswith("."): continue
+            if not os.path.isfile(name): continue
+            
+            local_files.append(name)
 
-                full_path: str = os.path.join(root, name)
-
-                # Hash
-                # try:
-                #     with open(full_path, "rb") as f:
-                #         hash: str = hashlib.sha1(f.read()).hexdigest()
-                # except Exception as e:
-                #     return dialogs.Messagebox.show_error(
-                #         f"Failed to read {name}!\n{type(e).__name__}: {e}",
-                #         "Error"
-                #     )
-                
-                local_files.append(name)
-        
         # Find problems
         for name in server_files:
             if name not in local_files:
